@@ -1,0 +1,118 @@
+plugins {
+    id 'org.springframework.boot' version '2.2.6.RELEASE'
+    id 'io.spring.dependency-management' version '1.0.9.RELEASE'
+    id 'java'
+    id 'maven'
+    id 'idea'
+}
+
+group = 'com.zcw'
+version = '1.0.0'
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url "http://maven.aliyun.com/nexus/content/groups/public/" }
+    maven { url "http://nexus.8atour.com/repository/maven-public/" }
+    maven { url "http://nexus.8atour.com/repository/maven-releases/" }
+}
+ext {
+    graphqlSpringBootStarterVersion = "5.0.2"
+    commonsCollectionsVersion = "4.4"
+    druidSpringBootStarterVersion = "1.1.22"
+    guavaVersion = "29.0-jre"
+}
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-undertow'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+    compileOnly 'org.projectlombok:lombok'
+    runtimeOnly 'mysql:mysql-connector-java'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+    annotationProcessor 'org.projectlombok:lombok'
+    implementation 'org.apache.commons:commons-collections4:' + commonsCollectionsVersion
+    implementation 'com.alibaba:druid-spring-boot-starter:' + druidSpringBootStarterVersion
+    implementation 'com.graphql-java:graphql-spring-boot-starter:' + graphqlSpringBootStarterVersion
+    implementation 'com.graphql-java:graphiql-spring-boot-starter:' + graphqlSpringBootStarterVersion
+    implementation 'com.google.guava:guava:' + guavaVersion
+
+    //测试依赖
+    testImplementation('org.springframework.boot:spring-boot-starter-test') {
+        exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
+    }
+}
+//全局排除依赖
+configurations {
+    all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-tomcat'
+    all*.exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+}
+test {
+    useJUnitPlatform()
+}
+
+//将src文件夹中的资源文件同时打包
+processResources {
+    from("src/main/java") {
+        include "**/*.xml"
+    }
+}
+
+//跳过所有test Tasks
+compileTestJava.setEnabled(false)
+processTestResources.setEnabled(false)
+testClasses.setEnabled(false)
+test.setEnabled(false)
+
+//设置资源目录
+sourceSets {
+    main {
+        java { srcDirs = ['src/main/java'] }
+        resources { srcDirs = ['src/main/resources'] }
+    }
+    test {
+        java { srcDirs = ['src/test/java'] }
+        resources { srcDirs = ['src/test/resources'] }
+    }
+}
+
+//设置文件编码
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
+    options.deprecation = true
+    options.compilerArgs += ["-parameters"]
+}
+
+//使用wrapper
+task createWrapper(type: Wrapper) {
+    gradleVersion = gradle.gradleVersion
+}
+
+//清除上次的编译过的文件（offline work 模式下使用)
+if (!cleanIdeaProject) {
+    task cleanIdeaProject(type: Delete) {
+        delete 'build', 'target', 'out'
+    }
+}
+
+//防止添加依赖时自动下载依赖源码和javadoc耗时
+idea {
+    module {
+        downloadSources = false
+        downloadJavadoc = false
+    }
+}
+
+jar {
+    archivesBaseName = "myGraphQLApp"
+    manifest {
+        attributes('Main-Class': 'com.zcw.GraphqlBootApplication')
+    }
+}

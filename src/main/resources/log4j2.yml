@@ -1,0 +1,47 @@
+Configuration:
+  status: trace
+  Properties:
+    Property:
+      - name: project.name
+        value: graphql-app
+      - name: log.path
+        value: ./log
+
+  Appenders:
+    Console:
+      name: CONSOLE
+      target: SYSTEM_OUT
+      encoding: UTF-8
+      ThresholdFilter:
+        level: TRACE
+        onMatch: ACCEPT
+        onMismatch: DENY
+      PatternLayout:
+        pattern: "[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%t] [%p] [%c] - %m%n"
+    RollingFile:
+      - name: FILE
+        ignoreExceptions: false
+        encoding: UTF-8
+        fileName: "${log.path}/${project.name}/stdout.log"
+        #日志文件归档后的名称
+        filePattern: "${log.path}/$${date:yyyy-MM}/${project.name}/stdout-%i.log.%d{yyyy-MM-dd}"
+        PatternLayout:
+          pattern: "[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%t] [%p] [%c] - %m%n"
+        Policies:
+          #一天一存，即使文件不满足100MB
+          TimeBasedTriggeringPolicy:
+            interval: "1"
+            modulate: "true"
+          #单个日志文件最大100MB,超过后将归档
+          SizeBasedTriggeringPolicy:
+            size: "100MB"
+        DefaultRolloverStrategy:
+          #filePattern中-%i的最大值
+          max: 10
+
+  Loggers:
+    Root:
+      level: INFO
+      AppenderRef:
+        - ref: CONSOLE
+        - ref: FILE
